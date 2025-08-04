@@ -20,7 +20,6 @@ class WASender:
         options.add_argument('--profile-directory=Profile 1')
         options.add_argument('--profiling-flush=n')
         options.add_argument('--enable-aggressive-domstorage-flushing')
-        options.add_argument('--incognito')
 
         self.driver = driver_class(options=options)
         self.driver.get("https://web.whatsapp.com/")
