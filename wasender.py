@@ -10,33 +10,26 @@ class WASender:
         while len(self.driver.execute_script(f'return document.querySelectorAll("{selector}")')) < content_amount:
             time.sleep(0.1)
 
-    def __init__(self, options: webdriver.ChromeOptions, driver_class = webdriver.Chrome, profile_path = os.path.join(os.getcwd(), 'profile')):
+    def __init__(self, options: webdriver.ChromeOptions = webdriver.ChromeOptions(), driver_class = webdriver.Chrome, profile_path = os.getcwd()):
         if not os.path.exists(profile_path):
             os.mkdir(profile_path)
 
-        options.add_argument("--incognito")
+        options.add_argument('--allow-profiles-outside-user-dir')
+        options.add_argument('--enable-profile-shortcut-manager')
+        options.add_argument(f'user-data-dir={os.path.abspath(profile_path)}')
+        options.add_argument('--profile-directory=Profile 1')
+        options.add_argument('--profiling-flush=n')
+        options.add_argument('--enable-aggressive-domstorage-flushing')
+        options.add_argument('--incognito')
 
         self.driver = driver_class(options=options)
-        self.accounts = {}
-
-    def add_account(self, phone_number):
-        self.driver.execute_script("window.open('https://web.whatsapp.com/')")
-
-        next_window_index = self.driver.window_handles.index(self.driver.current_window_handle) + 1
-        self.driver.switch_to.window(self.driver.window_handles[next_window_index])
-
+        self.driver.get("https://web.whatsapp.com/")
         self.wait_for_element("#side", 1)
-
-        self.accounts[phone_number] = self.driver.current_window_handle
         self.driver.find_element(By.CSS_SELECTOR, "body").send_keys(Keys.ESCAPE)
+        time.sleep(1)
 
-    def send_message(self, from_account: str, to_phone: str, text: str):
-        if from_account not in self.accounts:
-            self.add_account(from_account)
-
-        self.driver.switch_to.window(self.accounts[from_account])
+    def send_message(self, to_phone: str, text: str):
         self.driver.get(f"https://web.whatsapp.com/send?phone={to_phone}&text={text.replace(' ', '%20')}")
-
         self.wait_for_element("footer button", 3)
         self.driver.execute_script("document.querySelectorAll(\"footer button\")[2].click()")
 
