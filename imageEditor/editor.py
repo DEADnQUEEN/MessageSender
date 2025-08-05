@@ -13,3 +13,10 @@ class Editor(ABC):
     def draw_text_on_image(self, text, x, y, color: tuple[int, int, int]):
         pass
 
+    @abstractmethod
+    def open_image(self, path): 
+        pass
+
+    @abstractmethod
+    def save_image(self, path):
+        pass

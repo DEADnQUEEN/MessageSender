@@ -1,6 +1,7 @@
 import time
 import os
 from messageSender.sender import Sender
+import constants
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -44,12 +45,13 @@ class WASender(Sender):
         self.__go_to_user(to)
         self.wait_for_element("footer button", 3)
         self.driver.execute_script(
-            "const dataTransfer = new DataTransfer();" \
-            f"dataTransfer.setData('text', '{text}');" \
-            "const event = new ClipboardEvent('paste', {" \
-            "  clipboardData: dataTransfer," \
-            "  bubbles: true" \
-            "});" \
+            f"const text = `{text}`;"
+            "const dataTransfer = new DataTransfer();"
+            "dataTransfer.setData('text', text);"
+            "const event = new ClipboardEvent('paste', {"
+            "  clipboardData: dataTransfer,"
+            "  bubbles: true"
+            "});"
             "document.querySelector('#main p').dispatchEvent(event);"
         )
         self.send()
@@ -77,3 +79,5 @@ class WASender(Sender):
             'document.querySelectorAll("div:has(+input) div[role=\'button\']:has(> span > svg)")[1].click()'
         )
         self.wait_for_element('span + div > span[data-icon="msg-dblcheck"]', count)
+        time.sleep(constants.TIMEOUT)
+        
