@@ -3,14 +3,16 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import os
+from messageSender.sender import Sender
+import abc
 
-
-class WASender:
+class WASender(Sender, abc.ABC):
     def wait_for_element(self, selector, content_amount):
         while len(self.driver.execute_script(f'return document.querySelectorAll("{selector}")')) < content_amount:
             time.sleep(0.1)
 
     def __init__(self, options: webdriver.ChromeOptions = webdriver.ChromeOptions(), driver_class = webdriver.Chrome, profile_path = os.getcwd()):
+        super().__init__()
         if not os.path.exists(profile_path):
             os.mkdir(profile_path)
 
