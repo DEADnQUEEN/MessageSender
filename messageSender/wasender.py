@@ -31,8 +31,6 @@ class WASender(Sender):
 
         self.current = None
 
-        time.sleep(1)
-
     def __go_to_user(self, to: str):
         if self.current is None or self.current != to:
             self.driver.get(f"https://web.whatsapp.com/send?phone={to}")
@@ -55,6 +53,7 @@ class WASender(Sender):
             "document.querySelector('#main p').dispatchEvent(event);"
         )
         self.send()
+        self.waiter()
 
     def quit(self):
         time.sleep(1)
@@ -79,5 +78,30 @@ class WASender(Sender):
             'document.querySelectorAll("div:has(+input) div[role=\'button\']:has(> span > svg)")[1].click()'
         )
         self.wait_for_element('span + div > span[data-icon="msg-dblcheck"]', count)
-        time.sleep(constants.TIMEOUT)
-        
+        self.waiter()
+    
+    def waiter(self):
+        self.driver.execute_script(
+            """async function waiter(wait_for) {
+    while (true) {
+        let l = document.querySelectorAll("div[role='application'] div[role='row']");
+        let el = l[l.length - 1];
+        if (el.querySelector("span+div>span[aria-hidden='false']") === null) {await delay(); continue}
+        let attr = el.querySelector("span+div>span[aria-hidden='false']").getAttribute("data-icon");
+        if (wait_for === attr){
+            return
+        }
+        await delay();
+    }
+};
+function delay() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve("");
+    }, 10);
+  });
+};
+await waiter("msg-time");
+await waiter("msg-dblcheck");"""
+)
+        time.sleep(0.1)
