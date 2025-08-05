@@ -1,17 +1,17 @@
 import time
+import os
+from messageSender.sender import Sender
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-import os
-from messageSender.sender import Sender
-import abc
 
-class WASender(Sender, abc.ABC):
-    def wait_for_element(self, selector, content_amount):
-        while len(self.driver.execute_script(f'return document.querySelectorAll("{selector}")')) < content_amount:
+class WASender(Sender):
+    def wait_for_element(self, selector, count):
+        while len(self.driver.execute_script(f'return document.querySelectorAll(\'{selector}\')')) < count:
             time.sleep(0.1)
 
-    def __init__(self, options: webdriver.ChromeOptions = webdriver.ChromeOptions(), driver_class = webdriver.Chrome, profile_path = os.getcwd()):
+    def __init__(self, options: webdriver.ChromeOptions = webdriver.ChromeOptions(), driver_class = webdriver.Chrome, profile_path = os.path.join(os.getcwd(), "profile")):
         super().__init__()
         if not os.path.exists(profile_path):
             os.mkdir(profile_path)
@@ -27,13 +27,53 @@ class WASender(Sender, abc.ABC):
         self.driver.get("https://web.whatsapp.com/")
         self.wait_for_element("#side", 1)
         self.driver.find_element(By.CSS_SELECTOR, "body").send_keys(Keys.ESCAPE)
+
+        self.current = None
+
         time.sleep(1)
 
-    def send_message(self, to_phone: str, text: str):
-        self.driver.get(f"https://web.whatsapp.com/send?phone={to_phone}&text={text.replace(' ', '%20')}")
+    def __go_to_user(self, to: str):
+        if self.current is None or self.current != to:
+            self.driver.get(f"https://web.whatsapp.com/send?phone={to}")
+        self.current = to
+
+    def send(self) -> None:
+        self.driver.execute_script("document.querySelectorAll(\"footer button\")[2].click();")
+
+    def send_text(self, to: str, text: str):
+        self.__go_to_user(to)
         self.wait_for_element("footer button", 3)
-        self.driver.execute_script("document.querySelectorAll(\"footer button\")[2].click()")
+        self.driver.execute_script(
+            "const dataTransfer = new DataTransfer();" \
+            f"dataTransfer.setData('text', '{text}');" \
+            "const event = new ClipboardEvent('paste', {" \
+            "  clipboardData: dataTransfer," \
+            "  bubbles: true" \
+            "});" \
+            "document.querySelector('#main p').dispatchEvent(event);"
+        )
+        self.send()
 
     def quit(self):
         time.sleep(1)
         self.driver.quit()
+    
+    def send_image(self, to, image_path):
+        self.__go_to_user(to)
+        self.wait_for_element('[data-icon=\"plus-rounded\"]', 1)
+        
+        self.driver.execute_script("document.querySelector(\"[data-icon='plus-rounded']\").click()")
+        count = self.driver.execute_script(
+            'return document.querySelectorAll("span + div > span[data-icon=\'msg-dblcheck\']").length;'
+        )
+        self.driver.find_element(
+            By.CSS_SELECTOR,
+            'input[accept="image/*,video/mp4,video/3gpp,video/quicktime"]'
+        ).send_keys(
+            image_path
+        )
+        self.wait_for_element("div:has(+input) div[role=\"button\"]:has(> span > svg)", 2)
+        self.driver.execute_script(
+            'document.querySelectorAll("div:has(+input) div[role=\'button\']:has(> span > svg)")[1].click()'
+        )
+        self.wait_for_element('span + div > span[data-icon="msg-dblcheck"]', count)

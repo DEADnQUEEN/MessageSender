@@ -1,12 +1,10 @@
-from abc import ABC
-
-from PIL import Image, ImageFont, ImageDraw
 from imageEditor.editor import Editor
 
+from PIL import Image, ImageFont, ImageDraw
 
-class PILEditor(Editor, ABC):
+class PILEditor(Editor):
     def __init__(self, path):
-        super().__init__(path)
+        super().__init__()
         self.path = path
         self.img = Image.open(path)
         self.font = None
