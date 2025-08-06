@@ -1,7 +1,9 @@
 import time
 import os
+
 from messageSender.sender import Sender
-import constants
+from messageSender import constants
+from utils import logger
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -25,7 +27,7 @@ class WASender(Sender):
         options.add_argument('--enable-aggressive-domstorage-flushing')
 
         self.driver = driver_class(options=options)
-        self.driver.get("https://web.whatsapp.com/")
+        self.driver.get(constants.WA_URL)
         self.wait_for_element("#side", 1)
         self.driver.find_element(By.CSS_SELECTOR, "body").send_keys(Keys.ESCAPE)
 
@@ -33,7 +35,7 @@ class WASender(Sender):
 
     def __go_to_user(self, to: str):
         if self.current is None or self.current != to:
-            self.driver.get(f"https://web.whatsapp.com/send?phone={to}")
+            self.driver.get(f"{constants.SEND_URL}{to}")
         self.current = to
 
     def send(self) -> None:
@@ -79,29 +81,36 @@ class WASender(Sender):
         )
         self.wait_for_element('span + div > span[data-icon="msg-dblcheck"]', count)
         self.waiter()
+        os.remove(image_path)
+
+    @staticmethod
+    def __await_func(wait_for: str) -> str:
+        return " async function waiter(wait_for) {" \
+        "     while (true) {" \
+        "        let l = document.querySelectorAll(\"div[role='application'] div[role='row']\");" \
+        "         let el = l[l.length - 1];" \
+        "        if (el.querySelector(\"span+div>span[aria-hidden='false']\") === null) {await delay(); continue}" \
+        "        let attr = el.querySelector(\"span+div>span[aria-hidden='false']\").getAttribute(\"data-icon\");" \
+        "         if (wait_for === attr){" \
+        "             return" \
+        "         }" \
+        "         await delay();" \
+        "     }" \
+        " };" \
+        " function delay() {" \
+        "     return new Promise((resolve, reject) => {" \
+        "         setTimeout(() => {" \
+        "            resolve("");" \
+        "         }, 10);" \
+        "     });" \
+        " };" \
+        f"await waiter(\"{wait_for}\");"
     
     def waiter(self):
-        self.driver.execute_script(
-            """async function waiter(wait_for) {
-    while (true) {
-        let l = document.querySelectorAll("div[role='application'] div[role='row']");
-        let el = l[l.length - 1];
-        if (el.querySelector("span+div>span[aria-hidden='false']") === null) {await delay(); continue}
-        let attr = el.querySelector("span+div>span[aria-hidden='false']").getAttribute("data-icon");
-        if (wait_for === attr){
-            return
-        }
-        await delay();
-    }
-};
-function delay() {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve("");
-    }, 10);
-  });
-};
-await waiter("msg-time");
-await waiter("msg-dblcheck");"""
-)
+        try:
+            self.driver.execute_script(self.__await_func("msg-time"))
+        except Exception as e:
+            logger.collect_log(e)
+
+        self.driver.execute_script(self.__await_func("msg-dblcheck"))
         time.sleep(0.1)
