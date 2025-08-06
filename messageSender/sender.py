@@ -17,3 +17,10 @@ class Sender(ABC):
     def send_image(self, to, image_path) -> bool:
         pass
 
+    @abstractmethod
+    async def a_send_text(self, to, text) -> bool:
+        pass
+
+    @abstractmethod
+    async def a_send_image(self, to, image_path) -> bool:
+        pass
