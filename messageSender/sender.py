@@ -10,10 +10,10 @@ class Sender(ABC):
         pass
 
     @abstractmethod
-    def send_text(self, to, text) -> None:
+    def send_text(self, to, text) -> bool:
         pass
 
     @abstractmethod
-    def send_image(self, to, image_path) -> None:
+    def send_image(self, to, image_path) -> bool:
         pass
 

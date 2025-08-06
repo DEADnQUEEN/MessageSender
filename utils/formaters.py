@@ -31,4 +31,5 @@ FORMATERS: dict[str, Callable[[str], str]] = {
     "code": format_code,
     "number": format_number,
     "city": format_city,
+    "": lambda _: _,
 }

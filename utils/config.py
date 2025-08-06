@@ -24,5 +24,4 @@ TMP_PATH = os.path.join(os.getcwd(), CONFIG['tmp_folder'])
 if not os.path.exists(TMP_PATH):
     os.mkdir(TMP_PATH)
 
-
-
+COLUMN_PATH = os.path.join(os.getcwd(), "config", "csv_load.json")

@@ -14,25 +14,12 @@ def get_from_csv(
     with open(file_path, encoding="utf-8", newline='') as csvfile:
         r = csv.reader(csvfile, delimiter=delimiter, quotechar=quote_char)
 
-        for first_row in r:
-            for column in columns:
-                if isinstance(column, tuple):
-                    number = column[0]
-                elif isinstance(column, int):
-                    number = column
-                else:
-                    raise TypeError
-
-                if not number < len(first_row):
-                    raise IndexError("Column number out of range")
-            break
-
-        iterator = r.__iter__()
         if have_title:
-            iterator.__next__()
+            r.__next__()
+
         fail = 0
         rows = 0
-        for i, row in enumerate(iterator):
+        for i, row in enumerate(r):
             rows += 1
             export_array = []
             for index, column in enumerate(columns):
@@ -50,10 +37,9 @@ def get_from_csv(
             else:
                 yield export_array
 
-    if not fail:
-        print("All rows passed")
-    else:
-        print(f"Failed rows: {fail} of {rows}")
+    if fail:
+        logger.collect_log(f"Failed rows: {fail} of {rows}")
+
 
 def get_columns(file) -> list[Union[int, tuple[int, Callable[[str], Any], Callable[[str], bool]]]]:
     with open(file, encoding="utf-8", newline='') as json_file:
@@ -67,9 +53,7 @@ def get_columns(file) -> list[Union[int, tuple[int, Callable[[str], Any], Callab
             if isinstance(item, dict):
                 if "column" not in item or \
                     "formater" not in item or \
-                    "filter" not in item or \
-                    item['formater'] not in formaters.FORMATERS or \
-                    item['filter'] not in filters.FILTERS:
+                    "filter" not in item:
                     raise ValueError
 
                 output_array.append(

@@ -1,7 +1,6 @@
-import os.path
-import random
+import time
 
-from utils import config, get_data, logger, formaters, filters
+from utils import config, get_data, logger, formaters
 
 from messageSender.wasender import WASender
 from imageEditor.PILeditor import PILEditor
@@ -14,20 +13,16 @@ def main():
 
     for row in get_data.get_from_csv(
         config.CSV_DATA_FILE,
-        get_data.get_columns(
-            os.path.join(
-                os.getcwd(),
-                "config",
-                "csv_load.json"
-            )
-        )
+        get_data.get_columns(config.COLUMN_PATH),
+        have_title=False,
     ):
         number, city, code = row
 
-        bot.send_text(
+        if bot.send_text(
             number,
             formaters.text_format(code)
-        )
+        ):
+            continue
 
         path = format_image(
             editor,
@@ -46,4 +41,5 @@ if __name__ == '__main__':
         main()
     except Exception as e:
         logger.collect_log(str(e))
-        input("Error logged. Press Enter to Exit...")
+        print("Error logged")
+        time.sleep(10)

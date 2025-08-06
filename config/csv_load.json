@@ -1,16 +1,16 @@
 [
     {
-        "column": 2,
+        "column": 5,
         "formater": "number",
         "filter": "not_empty"
     },
     {
-        "column": 5,
+        "column": 3,
         "formater": "city",
         "filter": "template_exists"
     },
     {
-        "column": 7,
+        "column": 0,
         "formater": "code",
         "filter": "not_empty"
     }
