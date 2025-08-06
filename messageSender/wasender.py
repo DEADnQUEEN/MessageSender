@@ -15,7 +15,7 @@ class WASender(Sender):
         while len(self.driver.execute_script(f'return document.querySelectorAll(\'{selector}\')')) < count and save_wait > 0:
             time.sleep(0.1)
             save_wait = save_wait - 1
-        print(save_wait > 0)
+
         return save_wait > 0
 
     def __init__(self, options: webdriver.ChromeOptions = webdriver.ChromeOptions(), driver_class = webdriver.Chrome, profile_path = os.path.join(os.getcwd(), "profile")):

@@ -18,7 +18,7 @@ def main():
     ):
         number, city, code = row
 
-        if bot.send_text(
+        if not bot.send_text(
             number,
             formaters.text_format(code)
         ):
