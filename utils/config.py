@@ -2,7 +2,12 @@ import json
 import os
 
 
+TIMEDIFF = 0.1
+TIMEOUT = 50 * (1 / TIMEDIFF)
+
 CSV_DATA_FILE = os.path.join(os.getcwd(), 'config', 'table.csv')
+
+
 with open(os.path.join(os.getcwd(), 'config', 'image_config.json'), 'r', encoding="utf-8") as file:
     CONFIG = json.load(file)
 
@@ -25,3 +30,8 @@ if not os.path.exists(TMP_PATH):
     os.mkdir(TMP_PATH)
 
 COLUMN_PATH = os.path.join(os.getcwd(), "config", "csv_load.json")
+with open(COLUMN_PATH, encoding="utf-8", newline='') as json_file:
+    CSV_CONFIG = json.load(json_file)
+    COLUMN_DATA = CSV_CONFIG['columns']
+    CSV_HAS_TITLE = CSV_CONFIG['title']
+

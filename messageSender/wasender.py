@@ -2,27 +2,32 @@ import asyncio
 import time
 import os
 
-from messageSender.sender import Sender
+from messageSender.sender import Sender, AsyncSender
 from messageSender import constants
-from utils import logger
+from utils import logger, config
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
-class WASender(Sender):
+
+class WASender(Sender, AsyncSender):
     async def await_for_element(self, selector, count) -> bool:
-        save_wait = 60 * 10
+        save_wait = config.TIMEOUT
         while len(self.driver.execute_script(f'return document.querySelectorAll(\'{selector}\')')) < count and save_wait > 0:
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(config.TIMEDIFF)
             save_wait = save_wait - 1
 
         return save_wait > 0
 
+    def quit(self):
+        time.sleep(1)
+        self.driver.quit()
+
     def wait_for_element(self, selector, count) -> bool:
-        save_wait = 60 * 10
-        while len(self.driver.execute_script(f'return document.querySelectorAll(\'{selector}\')')) < count and save_wait > 0:
-            time.sleep(0.1)
+        save_wait = config.TIMEOUT
+        while self.driver.execute_script(f'return document.querySelectorAll(\'{selector}\').length') < count and save_wait > 0:
+            time.sleep(config.TIMEDIFF)
             save_wait = save_wait - 1
 
         return save_wait > 0
@@ -79,8 +84,7 @@ class WASender(Sender):
         self.paste_text(text)
         self.send()
 
-        self.waiter()
-        return True
+        return self.waiter()
 
     async def a_send_text(self, to, text) -> bool:
         self.__go_to_user(to)
@@ -95,11 +99,6 @@ class WASender(Sender):
         self.waiter()
         return True
 
-
-    def quit(self):
-        time.sleep(1)
-        self.driver.quit()
-    
     def send_image(self, to, image_path):
         self.__go_to_user(to)
 
@@ -121,12 +120,16 @@ class WASender(Sender):
             return False
 
         self.driver.execute_script(
-            'document.querySelectorAll("div:has(+input) div[role=\'button\']:has(> span > svg)")[1].click()'
+            'let items = document.querySelectorAll("div:has(+input) div[role=\'button\']:has(> span > svg)");' 
+            'console.log(items);'
+            'items[1].click()'
         )
 
-        self.waiter()
+        timeout = self.waiter()
+        if not timeout:
+            logger.collect_log(f"image {image_path} not sended for {to}, timeout")
         os.remove(image_path)
-        return True
+        return timeout
 
     async def a_send_image(self, to, image_path) -> bool:
         self.__go_to_user(to)
@@ -156,36 +159,45 @@ class WASender(Sender):
         os.remove(image_path)
         return True
 
-    def __await_func(self, waits_for: list[str]) -> bool:
-        function_text =  " async function waiter(waits_for) {" \
-        "     while (true) {" \
-        "        let l = document.querySelectorAll(\"div[role='application'] div[role='row']\");" \
-        "        let el = l[l.length - 1];" \
-        "        if (el.querySelector(\"span+div>span[aria-hidden='false']\") === null) {await delay(); continue}" \
-        "        let attr = el.querySelector(\"span+div>span[aria-hidden='false']\").getAttribute(\"data-icon\");" \
-        "        for (let index = 0; index < waits_for.length; index++) {" \
-        "           if (waits_for[index] === attr){" \
-        "              return" \
-        "           }" \
-        "        }" \
-        "        await delay();" \
-        "     }" \
-        " };" \
-        " function delay() {" \
-        "     return new Promise((resolve, reject) => {" \
-        "         setTimeout(() => {" \
-        "            resolve("");" \
-        "         }, 10);" \
-        "     });" \
-        " };" \
-        f"await waiter(['{'\', \''.join(waits_for)}']);"
+    @staticmethod
+    def __wait_func_text(waits_for: list[str]) -> str:
+        return "async function waiter(waits_for) {" \
+            "console.log(waits_for);" \
+            "let save_freeze = 0;" \
+            "while (save_freeze < 10000000) {" \
+                "save_freeze++;" \
+                "let l = document.querySelectorAll(\"div[role='application'] div[role='row']\");" \
+                "let el = l[l.length - 1].querySelector(\"span+div>span[aria-hidden='false']\");" \
+                "if (el === null) {await delay(); continue}" \
+                "let attr = el.getAttribute(\"data-icon\");" \
+                "console.log(attr);" \
+                "await delay();" \
+                "for (let index = 0; index < waits_for.length; index++) {" \
+                    "console.log(waits_for[index] === attr);" \
+                    "if (waits_for[index] === attr){" \
+                        "return true" \
+                    "}" \
+                "}" \
+            "}; return false;" \
+        "};" \
+        "function delay() {" \
+            "return new Promise((resolve, reject) => {" \
+                "setTimeout(() => {" \
+                    "resolve("");" \
+                "}, 10);" \
+            "});" \
+        "};" \
+        f"let out = await waiter(['{'\', \''.join(waits_for)}']); return out;"
+
+    def __waiting(self, waits_for: list[str]):
+        is_found = False
         try:
-            self.driver.execute_async_script(function_text)
+           is_found = self.driver.execute_script(self.__wait_func_text(waits_for))
         except Exception as e:
-            logger.collect_log(str(e))
-            return False
-        return True
-    
+           logger.collect_log(f"Exception: {e}", "exception")
+
+        return is_found
+
     def waiter(self):
-        self.__await_func(["msg-time"])
-        self.__await_func(["msg-check", "msg-dblcheck"])
+        wait = self.__wait_func(["msg-time"]) and self.__wait_func(["msg-check", "msg-dblcheck"])
+        return wait

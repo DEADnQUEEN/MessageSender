@@ -1,17 +1,20 @@
-[
-    {
-        "column": 5,
-        "formater": "number",
-        "filter": "not_empty"
-    },
-    {
-        "column": 3,
-        "formater": "city",
-        "filter": "template_exists"
-    },
-    {
-        "column": 0,
-        "formater": "code",
-        "filter": "not_empty"
-    }
-]
+{
+    "title": true,
+    "columns": [
+        {
+            "column": 5,
+            "formater": "number",
+            "filter": "not_empty"
+        },
+        {
+            "column": 3,
+            "formater": "city",
+            "filter": "template_exists"
+        },
+        {
+            "column": 0,
+            "formater": "code",
+            "filter": "not_empty"
+        }
+    ]
+}

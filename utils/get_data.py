@@ -1,5 +1,4 @@
 import csv
-import json
 from typing import Callable, Any, Union
 from utils import logger, formaters, filters
 
@@ -8,11 +7,10 @@ def get_from_csv(
         file_path,
         columns: list[Union[int, tuple[int, Callable[[str], Any], Callable[[str], bool]]]],
         have_title: bool = True,
-        delimiter=',',
-        quote_char='"'
+        **kwargs
 ):
     with open(file_path, encoding="utf-8", newline='') as csvfile:
-        r = csv.reader(csvfile, delimiter=delimiter, quotechar=quote_char)
+        r = csv.reader(csvfile, **kwargs)
 
         if have_title:
             r.__next__()
@@ -41,31 +39,28 @@ def get_from_csv(
         logger.collect_log(f"Failed rows: {fail} of {rows}")
 
 
-def get_columns(file) -> list[Union[int, tuple[int, Callable[[str], Any], Callable[[str], bool]]]]:
-    with open(file, encoding="utf-8", newline='') as json_file:
-        data = json.load(json_file)
-        output_array = []
+def get_columns(
+        columns: list[Union[int, dict[str, Union[str, int]]]],
+) -> list[Union[int, tuple[int, Callable[[str], str], Callable[[str], bool]]]]:
+    column_data = []
 
-        if not isinstance(data, list):
-            raise TypeError
-
-        for item in data:
-            if isinstance(item, dict):
-                if "column" not in item or \
-                    "formater" not in item or \
-                    "filter" not in item:
-                    raise ValueError
-
-                output_array.append(
-                    (
-                        item['column'],
-                        formaters.FORMATERS[item['formater']],
-                        filters.FILTERS[item['filter']]
-                    )
-                )
-            elif isinstance(item, int):
-                output_array.append(item)
-            else:
+    for column in columns:
+        if isinstance(column, dict):
+            if "column" not in column or \
+                "formater" not in column or \
+                "filter" not in column:
                 raise ValueError
 
-    return output_array
+            column_data.append(
+                (
+                    column['column'],
+                    formaters.FORMATERS[column['formater']],
+                    filters.FILTERS[column['filter']]
+                )
+            )
+        elif isinstance(column, int):
+            column_data.append(column)
+        else:
+            raise ValueError
+
+    return column_data
