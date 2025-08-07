@@ -3,10 +3,6 @@ from imageEditor import editor
 
 class Sender(ABC):
     @abstractmethod
-    def send(self) -> None:
-        pass
-
-    @abstractmethod
     def send_text(self, to, text) -> bool:
         pass
 
