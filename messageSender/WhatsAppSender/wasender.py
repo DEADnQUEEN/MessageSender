@@ -3,7 +3,7 @@ import time
 import os
 
 from messageSender.sender import Sender, AsyncSender
-from messageSender import constants
+from messageSender.WhatsAppSender import constants
 from utils import logger, config
 
 from selenium import webdriver
@@ -20,10 +20,6 @@ class WASender(Sender, AsyncSender):
 
         return save_wait > 0
 
-    def quit(self):
-        time.sleep(1)
-        self.driver.quit()
-
     def wait_for_element(self, selector, count) -> bool:
         save_wait = config.TIMEOUT
         while self.driver.execute_script(f'return document.querySelectorAll(\'{selector}\').length') < count and save_wait > 0:
@@ -32,10 +28,27 @@ class WASender(Sender, AsyncSender):
 
         return save_wait > 0
 
+    def __enter__(self):
+        self.driver = self.driver_class(options=self.options)
+        self.driver.get(constants.WA_URL)
+
+        if not self.wait_for_element("#side", 1):
+            raise ValueError
+
+        self.driver.find_element(By.CSS_SELECTOR, "body").send_keys(Keys.ESCAPE)
+        self.current = None
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        time.sleep(1)
+        self.driver.quit()
+
     def __init__(self, options: webdriver.ChromeOptions = webdriver.ChromeOptions(), driver_class = webdriver.Chrome, profile_path = os.path.join(os.getcwd(), "profile")):
-        super().__init__()
         if not os.path.exists(profile_path):
             os.mkdir(profile_path)
+
+        self.options = options
+        self.driver_class = driver_class
 
         options.add_argument('--allow-profiles-outside-user-dir')
         options.add_argument('--enable-profile-shortcut-manager')
@@ -43,16 +56,8 @@ class WASender(Sender, AsyncSender):
         options.add_argument('--profile-directory=Profile 1')
         options.add_argument('--profiling-flush=n')
         options.add_argument('--enable-aggressive-domstorage-flushing')
-
-        self.driver = driver_class(options=options)
-        self.driver.get(constants.WA_URL)
-
-        if not self.wait_for_element("#side", 1):
-            raise ValueError
-
-        self.driver.find_element(By.CSS_SELECTOR, "body").send_keys(Keys.ESCAPE)
-
         self.current = None
+
 
     def __go_to_user(self, to: str):
         if self.current is None or self.current != to:

@@ -1,7 +1,7 @@
 import time
 
 from utils import config, get_data, logger, formaters
-from messageSender.wasender import WASender
+from messageSender.WhatsAppSender.wasender import WASender
 from imageEditor.PILeditor import PILEditor
 from imageEditor.image_editor import format_image
 
