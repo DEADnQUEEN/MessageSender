@@ -59,8 +59,8 @@ class FileLoad(base.FileLoader):
         return self.grid.data
 
     def load_file(self):
-        view = self.load_ui()
-        self.parent_view = view
+        self.parent_view = self.load_ui()
         self.setup_file_view(self.view_frame)
         self.show_in_file_zone()
-        view.grab_set()
+        self.parent_view.grab_set()
+        self.parent_view.focus_set()

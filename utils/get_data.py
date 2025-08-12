@@ -1,7 +1,6 @@
 import csv
 import json
-import sys
-from typing import Callable, Any, Union
+from typing import Callable, Union
 from utils import logger, formaters, filters
 
 

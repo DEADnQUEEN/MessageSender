@@ -16,6 +16,7 @@ class FileLoader(ABC):
         self.view_frame = None
 
         self.widgets = [] if additional_widgets is None else additional_widgets
+        self.additional_widgets = []
 
     @abstractmethod
     def open_file(self):
@@ -57,12 +58,12 @@ class FileLoader(ABC):
         )
         load_button.pack(side=tk.TOP, anchor=tk.W)
 
+        self.additional_widgets = []
         for widget_object in self.widgets:
             widget_class, widget_data = widget_object
-
             widget = widget_class(button_frame, **widget_data)
-
             widget.pack(side=tk.TOP, anchor=tk.W)
+            self.additional_widgets.append(widget)
 
         button_frame.pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
 

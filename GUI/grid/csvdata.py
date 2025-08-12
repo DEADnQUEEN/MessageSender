@@ -4,7 +4,7 @@ from GUI.grid import grid
 
 class CSVData(grid.GridViewer):
     def __init__(self):
-        add_button_text = "Добавить значение"
+        add_button_text = "Добавить переменную"
         columns = {
             "column": (
                 constants.WIDGETS['Number'],

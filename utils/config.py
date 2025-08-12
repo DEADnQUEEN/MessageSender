@@ -24,14 +24,6 @@ with open(get_file_path('files.json'), 'r') as json_file:
     FILES = json.load(json_file)
 
 
-with open(get_file_path('image_config.json'), 'r', encoding="utf-8") as file:
-    CONFIG = json.load(file)
-
-
-with open(get_file_path('replaces.json'), 'r', encoding="utf-8") as file:
-    TEXT_REPLACES = json.load(file)
-
-
 for directory in [LOGS, TEMPORARY]:
     if not os.path.exists(FILES[directory]):
         os.mkdir(FILES[directory])

@@ -117,7 +117,7 @@ class GridFrame(tk.Frame):
         for index, column_name in enumerate(columns.keys()):
             column_label = tk.Label(
                 self.__content_frame,
-                text=column_name
+                text=column_name if column_name not in TRANSLATES else TRANSLATES[column_name]
             )
             column_label.grid(row=0, column=index)
 
@@ -173,6 +173,7 @@ class GridViewer:
 
         form.pack(fill=tk.BOTH, expand=True)
         window.grab_set()
+        window.focus_set()
 
         return form
 

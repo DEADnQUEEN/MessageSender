@@ -2,11 +2,11 @@ import tkinter as tk
 from tkinter import messagebox
 from typing import Optional
 
-from GUI.loaders import csv_loader, text_loader
 from GUI import constants
+from GUI.loaders import csv_loader, text_loader
 from GUI.sender_view import config
-
 from utils import get_data, formaters, logger
+
 
 class SenderUI:
     def setup_window(self):
@@ -96,7 +96,8 @@ class SenderUI:
                     self.__csv.filepath,
                     get_data.get_columns(
                         self.__csv_variables
-                    )
+                    ),
+                    not self.__csv.header_exists
                 )
             ):
                 replaces = {}
@@ -114,9 +115,6 @@ class SenderUI:
 
                 self.state_label.config(text=f"Отправляется сообщение {number + 1}")
                 phone_number = csv_row[self.__to_combobox.value]
-
-                phone_number = "89182124943"
-                bot.current = None
 
                 text_message = formaters.paste_texts(
                     base_text,

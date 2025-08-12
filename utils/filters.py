@@ -1,6 +1,6 @@
 from utils import config
 from typing import Callable
-import datetime
+
 
 def is_not_empty(value: str) -> bool:
     return len(value) != 0
