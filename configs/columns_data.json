@@ -1,0 +1,17 @@
+{
+    "code": {
+        "column": 0,
+        "formater": "code",
+        "filter": "not_empty"
+    },
+    "city": {
+        "column": 3,
+        "formater": "city",
+        "filter": "template_exists"
+    },
+    "number": {
+        "column": 5,
+        "formater": "number",
+        "filter": "not_empty"
+    }
+}

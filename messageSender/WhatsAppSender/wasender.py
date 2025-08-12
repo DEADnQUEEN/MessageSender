@@ -47,15 +47,16 @@ class WASender(Sender, AsyncSender):
         if not os.path.exists(profile_path):
             os.mkdir(profile_path)
 
-        self.options = options
         self.driver_class = driver_class
 
         options.add_argument('--allow-profiles-outside-user-dir')
         options.add_argument('--enable-profile-shortcut-manager')
         options.add_argument(f'user-data-dir={os.path.abspath(profile_path)}')
-        options.add_argument('--profile-directory=Profile 1')
+        options.add_argument('--profile-directory=Profile1')
         options.add_argument('--profiling-flush=n')
         options.add_argument('--enable-aggressive-domstorage-flushing')
+
+        self.options = options
         self.current = None
 
 
@@ -204,5 +205,6 @@ class WASender(Sender, AsyncSender):
         return is_found
 
     def waiter(self):
-        wait = self.__wait_func(["msg-time"]) and self.__wait_func(["msg-check", "msg-dblcheck"])
+        wait = self.__waiting(["msg-time"]) and self.__waiting(["msg-check", "msg-dblcheck"])
+        time.sleep(0.05)
         return wait

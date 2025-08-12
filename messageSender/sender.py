@@ -1,21 +1,31 @@
 from abc import ABC, abstractmethod
 from imageEditor import editor
 
-class Sender(ABC):
+class WithUsage(ABC):
+    @abstractmethod
+    def __enter__(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        raise NotImplementedError
+
+
+class Sender(WithUsage):
     @abstractmethod
     def send_text(self, to, text: str) -> bool:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def send_image(self, to, image_path) -> bool:
-        pass
+        raise NotImplementedError
 
 
-class AsyncSender(ABC):
+class AsyncSender(WithUsage):
     @abstractmethod
     async def a_send_text(self, to, text) -> bool:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def a_send_image(self, to, image_path) -> bool:
-        pass
+        raise NotImplementedError

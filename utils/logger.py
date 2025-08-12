@@ -5,7 +5,7 @@ from typing import Optional
 
 
 def collect_log(text, filename: Optional[str] = None):
-    log_name = datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S") + ".txt"
+    log_name = datetime.datetime.now().strftime("%d-%m-%YT%H-%M") + ".txt"
     if filename:
         log_name = filename + "__" + log_name
     with open(
