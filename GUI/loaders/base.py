@@ -3,47 +3,22 @@ from abc import abstractmethod, ABC
 from typing import Optional
 from tkinter import messagebox
 
+from GUI.fileview import base
 
-class FileLoader(ABC):
-    def __init__(self, file_types, additional_widgets: Optional[list[tuple[type[tk.Widget], dict[str, any]]]] = None):
-        self.window = tk.Toplevel
-        self.view = None
-        self.filepath: Optional[str] = None
-        self.file_types = file_types
-        self.view_zone = None
 
-        self.parent_view = None
-        self.view_frame = None
-
-        self.widgets = [] if additional_widgets is None else additional_widgets
-        self.additional_widgets = []
-
-    @abstractmethod
-    def open_file(self):
-        raise NotImplementedError
-
-    @abstractmethod
+class LoaderBase(ABC):
     def load_file(self):
-        raise NotImplementedError
+        self.parent_view = self.load_ui()
+        self.setup_file_view(self.view_frame)
+        self.show_in_file_zone()
+        self.parent_view.grab_set()
+        self.parent_view.focus_set()
 
-    @abstractmethod
     def setup_file_view(self, master: tk.Misc):
-        raise NotImplementedError
+        self.preview_instance.setup(master)
 
-
-    def cancel(self):
-        answer = messagebox.askokcancel(parent=self.view, title="Отмена", message="Данные будут утеряны")
-
-        if answer:
-            self.filepath = None
-            self.view.destroy()
-
-    def save(self):
-        if self.filepath is None:
-            messagebox.showerror(parent=self.view, title="Ошибка", message="Файл ещё не выбран")
-            return
-        messagebox.showinfo(parent=self.view, title="Сохранено", message="Файл успешно сохранен")
-        self.view.destroy()
+    def show_in_file_zone(self):
+        self.preview_instance.fill()
 
     def load_ui(self) -> tk.Toplevel:
         self.view = self.window()
@@ -51,12 +26,7 @@ class FileLoader(ABC):
         content_frame = tk.Frame(self.view)
         button_frame = tk.Frame(content_frame)
 
-        load_button = tk.Button(
-            button_frame,
-            text="Выбрать файл",
-            command=self.open_file
-        )
-        load_button.pack(side=tk.TOP, anchor=tk.W)
+        self.static_content(button_frame)
 
         self.additional_widgets = []
         for widget_object in self.widgets:
@@ -88,3 +58,84 @@ class FileLoader(ABC):
         bottom_frame.pack(expand=False, fill=tk.X, side=tk.BOTTOM)
 
         return self.view
+
+    def __init__(
+            self,
+            preview_instance: base.View,
+            additional_widgets: Optional[list[tuple[type[tk.Widget], dict[str, any]]]] = None
+    ):
+        super().__init__()
+
+        self.preview_instance: base.View = preview_instance
+
+        self.window = tk.Toplevel
+        self.view = None
+        self.view_zone = None
+
+        self.parent_view = None
+        self.view_frame = None
+
+        self.widgets = [] if additional_widgets is None else additional_widgets
+        self.additional_widgets = []
+
+    @abstractmethod
+    def cancel(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def save(self):
+        raise NotImplementedError
+
+    def static_content(self, master: tk.Misc):
+        raise NotImplementedError
+
+    def get_name(self):
+        raise NotImplementedError
+
+class RemoteLoader(LoaderBase, ABC):
+    def cancel(self):
+        if messagebox.askokcancel(parent=self.view, title="Отмена", message="Данные будут утеряны"):
+            self.view.destroy()
+
+    def save(self):
+        messagebox.showinfo(parent=self.view, title="Сохранено", message="Данные получены и сохранены")
+        self.view.destroy()
+
+
+class FileLoader(LoaderBase, ABC):
+    def __init__(
+            self,
+            file_types,
+            view_instance: base.View,
+            additional_widgets: Optional[list[tuple[type[tk.Widget], dict[str, any]]]] = None
+    ):
+        super().__init__(view_instance, additional_widgets)
+
+        self.filepath: Optional[str] = None
+        self.file_types = file_types
+
+    @abstractmethod
+    def open_file(self):
+        raise NotImplementedError
+
+    def cancel(self):
+        answer = messagebox.askokcancel(parent=self.view, title="Отмена", message="Данные будут утеряны")
+
+        if answer:
+            self.filepath = None
+            self.view.destroy()
+
+    def save(self):
+        if self.filepath is None:
+            messagebox.showerror(parent=self.view, title="Ошибка", message="Файл ещё не выбран")
+            return
+        messagebox.showinfo(parent=self.view, title="Сохранено", message="Файл успешно сохранен")
+        self.view.destroy()
+
+    def static_content(self, master: tk.Misc):
+        load_button = tk.Button(
+            master,
+            text="Выбрать файл",
+            command=self.open_file
+        )
+        load_button.pack(side=tk.TOP, anchor=tk.W)

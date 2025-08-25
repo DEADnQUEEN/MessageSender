@@ -1,7 +1,12 @@
 from abc import ABC, abstractmethod
-from imageEditor import editor
 
-class WithUsage(ABC):
+
+class BaseSender(ABC):
+    def __init__(self):
+        super().__init__()
+        self.template: str = ""
+        self.variables: dict = {}
+
     @abstractmethod
     def __enter__(self):
         raise NotImplementedError
@@ -10,10 +15,16 @@ class WithUsage(ABC):
     def __exit__(self, exc_type, exc_val, exc_tb):
         raise NotImplementedError
 
+    def set_template(self, template: str):
+        self.template = template
 
-class Sender(WithUsage):
+    def set_variables(self, variables: dict):
+        self.variables = variables
+
+
+class Sender(BaseSender):
     @abstractmethod
-    def send_text(self, to, text: str) -> bool:
+    def send_text(self, to) -> bool:
         raise NotImplementedError
 
     @abstractmethod
@@ -21,9 +32,9 @@ class Sender(WithUsage):
         raise NotImplementedError
 
 
-class AsyncSender(WithUsage):
+class AsyncSender(BaseSender):
     @abstractmethod
-    async def a_send_text(self, to, text) -> bool:
+    async def a_send_text(self, to) -> bool:
         raise NotImplementedError
 
     @abstractmethod

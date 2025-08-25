@@ -3,36 +3,31 @@ from tkinter import messagebox
 from typing import Optional
 
 from GUI import constants
-from GUI.loaders import csv_loader, text_loader
-from GUI.sender_view import config
-from utils import get_data, formaters, logger
+from GUI.loaders import csv_loader, text_loader, base
+from GUI.content import content
+
+from utils import logger
+from messageSender import sender
 
 
 class SenderUI:
     def setup_window(self):
         window = tk.Toplevel()
 
-        csv_frame = tk.Frame(window, borderwidth=1, relief=tk.RIDGE)
-        csv_label = tk.Label(csv_frame, text=f'CSV файл:', font=("Arial", 12))
-        csv_label.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        csv_view = tk.Frame(csv_frame)
-        self.__csv.setup_file_view(csv_view)
-        csv_view.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
-        csv_frame.grid(row=0, column=0, padx=5, pady=5, rowspan=2, sticky=tk.NSEW)
+        for index, loader in enumerate((self.__loaded_content, self.__data)):
+            label = tk.Label(window, text=loader.get_name(), font=("Arial", 12))
+            label.grid(padx=5, pady=5, column=index, row=0, sticky=tk.NSEW)
 
-        txt_container = tk.Frame(window, borderwidth=1, relief=tk.RIDGE)
-        txt_label = tk.Label(txt_container, text="Текст сообщения", font=("Arial", 12))
-        txt_label.pack(side=tk.TOP, padx=5, pady=5)
-        txt_view = tk.Frame(txt_container)
-        self.__txt.setup_file_view(txt_view)
-        txt_view.pack(side=tk.TOP, padx=5, pady=5, fill=tk.BOTH, expand=True)
-        txt_container.grid(row=0, column=1, padx=5, pady=5, sticky=tk.NSEW)
+            frame = tk.Frame(window, borderwidth=1, relief=tk.RIDGE)
+            loader.setup_file_view(frame)
+            loader.show_in_file_zone()
+            frame.grid(row=1, column=0, padx=5, pady=5, rowspan=2, sticky=tk.NSEW)
 
         work_container = tk.Frame(window, borderwidth=1, relief=tk.RIDGE)
 
         self.__to_combobox = constants.WIDGETS['Combobox'](
             work_container,
-            values=list(self.__csv_variables.keys()),
+            values=list(self.__data.columns.keys()),
             state='readonly',
         )
         self.__to_combobox.grid(row=0, column=0, padx=5, pady=5, sticky=tk.NSEW)
@@ -44,18 +39,12 @@ class SenderUI:
         )
         select_button.grid(row=0, column=1, padx=5, pady=5, sticky=tk.NSEW)
 
-        self.__engine_combobox = constants.WIDGETS['Combobox'](
-            work_container,
-            values=list(config.WORKING_SENDERS.keys()),
-            state='readonly',
-        )
-        self.__engine_combobox.grid(row=1, column=0, padx=5, pady=5, sticky=tk.NSEW)
         button = tk.Button(
             work_container,
             text="Отправлять",
             command=self.save_wrap
         )
-        button.grid(row=1, column=1, padx=5, pady=5)
+        button.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
 
         self.state_label = tk.Label(
             work_container,
@@ -63,7 +52,7 @@ class SenderUI:
         )
         self.state_label.grid(row=2, column=0, padx=5, pady=5, columnspan=2, sticky=tk.NSEW)
 
-        work_container.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
+        work_container.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky=tk.NSEW)
 
         window.update()
 
@@ -82,60 +71,51 @@ class SenderUI:
             logger.collect_log(str(e), "ui_exception")
 
     def send_message(self):
-        with open(self.__txt.filepath, 'r', encoding='utf-8') as f:
-            base_text = ""
-            for line in f.readlines():
-                base_text += line
+        if self.__bot_instance is None:
+            raise ValueError
 
-        with config.WORKING_SENDERS[self.__engine_combobox.value]() as bot:
-            if not self.__csv.filepath:
-                raise ValueError("csv file is empty")
+        for k in self.__loaded_content.get_variables.keys():
+            if k not in self.__data.columns:
+                messagebox.showerror(
+                    parent=self.state_label,
+                    title='Ошибка',
+                    message='Переменная не существует.\nВозможно вы их обновили, но забыли связать текстовый шаблон'
+                )
+                raise KeyError
+
+        text = self.__loaded_content.get_content
+
+        with self.__bot_instance() as bot:
+            bot.set_template(text)
 
             for number, csv_row in enumerate(
-                get_data.get_from_csv(
-                    self.__csv.filepath,
-                    get_data.get_columns(
-                        self.__csv_variables
-                    ),
-                    not self.__csv.header_exists
-                )
+                self.__data.get_from_csv()
             ):
-                replaces = {}
-
-                for k, v in self.__txt.columns.items():
-                    if k not in self.__csv_variables:
-                        messagebox.showerror(
-                            parent=self.state_label,
-                            title='Ошибка',
-                            message='Переменная не существует.\nВозможно вы их обновили, но забыли связать текстовый шаблон'
-                        )
-                        bot.__exit__(None, None, None)
-                        raise ValueError("template error")
-                    replaces[v['from']] = csv_row[k]
-
                 self.state_label.config(text=f"Отправляется сообщение {number + 1}")
+                bot.set_variables(
+                    {
+                        value['from']: csv_row[key]
+                        for key, value in self.__loaded_content.get_variables.keys()
+                    }
+                )
+
                 phone_number = csv_row[self.__to_combobox.value]
 
-                text_message = formaters.paste_texts(
-                    base_text,
-                    **replaces
-                )
-
-                bot.send_text(phone_number, text_message)
+                bot.send_text(phone_number)
 
                 self.state_label.config(text=f"Cообщение {number + 1} отправлено")
                 self.state_label.master.update()
 
+    def __init__(
+            self,
+            bot: Optional[type[sender.Sender]] = None,
+            data: csv_loader.CSVLoader = None,
+            loader_content: content.Base = None,
+    ):
+        self.__data = data
+        self.__loaded_content = loader_content
 
-    def __init__(self, csv: csv_loader.CSVLoader, txt: text_loader.TXTLoader):
-        self.__txt = txt
-        self.__csv = csv
+        self.__bot_instance: Optional[type[sender.Sender]] = bot
 
-        self.__engine_combobox = None
         self.__to_combobox = None
         self.state_label: Optional[tk.Label] = None
-
-    @property
-    def __csv_variables(self):
-        return self.__csv.columns
-

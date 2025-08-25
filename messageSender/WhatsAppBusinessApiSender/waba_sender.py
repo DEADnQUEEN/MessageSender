@@ -1,29 +1,70 @@
 import requests
 import json
+
 from messageSender import sender
 from messageSender.WhatsAppBusinessApiSender import config
 
+from utils import logger
+
+
+def get_endpoint(endpoint: str):
+    if endpoint not in config.ENDPOINTS.keys():
+        raise KeyError
+
+    return f"{config.BASE_URL}{config.ENDPOINTS[endpoint]}?token={config.TOKEN}"
 
 class WhatsAppApiSender(sender.Sender):
     @staticmethod
-    def __send_post_request(endpoint: str, **data):
-        data['token'] = config.API_KEY
-        return requests.post(
-            url=f"{config.BASE_URL}{endpoint}",
-            data=json.dumps(data),
-        )
+    def send_get_request(endpoint):
+        url = get_endpoint(endpoint)
 
-    def send_text(self, to, text: str) -> bool:
-        response = self.__send_post_request(
-            endpoint=config.ENDPOINTS['text'],
-            body=text,
-            phone=to
+        response = requests.get(
+            url=url,
+            headers={
+                'Content-Type': 'application/json',
+            }
         )
-        response.raise_for_status()
-        return True
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            logger.collect_log(str(e), "http_error")
+            raise e
+        return response.json()
+
+    @staticmethod
+    def send_text_template(to):
+        response =requests.post(
+            url=get_endpoint(endpoint=config.ENDPOINTS['template']),
+            data=json.dumps(
+                {
+
+                }
+            )
+        )
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            logger.collect_log(str(e), "http_error")
+            raise e
+
+    def send_text(self, to) -> bool:
+        response =requests.post(
+            url = get_endpoint(endpoint=config.ENDPOINTS['text']),
+            data=json.dumps(
+                {
+
+                }
+            )
+        )
+        try:
+            response.raise_for_status()
+            return True
+        except requests.exceptions.HTTPError as e:
+            logger.collect_log(str(e), "http_error")
+            return False
 
     def send_image(self, to, image_path) -> bool:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def __enter__(self):
         return self

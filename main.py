@@ -1,14 +1,12 @@
 import time
 
 from utils import config, get_data, logger, formaters
-from messageSender.WhatsAppSender.wasender import WASender
-from imageEditor.PILeditor import PILEditor
+from messageSender.WhatsAppBusinessApiSender.waba_sender import WhatsAppApiSender
 from imageEditor.image_editor import format_image
 
 
 def main():
-    editor = PILEditor()
-    with WASender(profile_path="user") as bot:
+    with WhatsAppApiSender() as bot:
         for row in get_data.get_from_csv(
             config.CSV_DATA_FILE,
             get_data.get_columns(config.COLUMN_DATA),
@@ -16,22 +14,12 @@ def main():
         ):
             number, city, code = row
 
-            if not bot.send_text(
+            if not bot.send_text_template(
                 number,
-                formaters.text_format(code)
+                code
             ):
                 logger.collect_log(f"text sender timeout", f"timeout-{number}")
                 continue
-
-            path = format_image(
-                editor,
-                city,
-                code
-            )
-            bot.send_image(
-                number,
-                path
-            )
 
 
 if __name__ == '__main__':

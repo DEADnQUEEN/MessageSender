@@ -59,6 +59,8 @@ class WASender(Sender, AsyncSender):
         self.options = options
         self.current = None
 
+        super().__init__()
+
 
     def __go_to_user(self, to: str):
         if self.current is None or self.current != to:
@@ -80,26 +82,34 @@ class WASender(Sender, AsyncSender):
             "document.querySelector('#main p').dispatchEvent(event);"
         )
 
-    def send_text(self, to: str, text: str) -> bool:
+    def __set_text(self):
+        text = self.template
+
+        for replace, to in self.variables.items():
+            text = text.replace(replace, to)
+
+        return text
+
+    def send_text(self, to: str) -> bool:
         self.__go_to_user(to)
 
         if not self.wait_for_element("footer button", 3):
             logger.collect_log(f"text is not sended for {to}")
             return False
 
-        self.paste_text(text)
+        self.paste_text(self.__set_text())
         self.send()
 
         return self.waiter()
 
-    async def a_send_text(self, to, text) -> bool:
+    async def a_send_text(self, to) -> bool:
         self.__go_to_user(to)
 
         if await self.await_for_element("footer button", 3):
             logger.collect_log(f"text is not sended for {to}")
             return False
 
-        self.paste_text(text)
+        self.paste_text(self.__set_text())
         self.send()
 
         self.waiter()

@@ -1,4 +1,5 @@
 {
     "text": "sendMessage",
-    "image": "sendFile"
+    "template": "sendTemplate",
+    "templates": "templates"
 }

@@ -1,13 +1,6 @@
 from typing import Callable
 
 
-def paste_texts(base_text, **replaces) -> str:
-    for replace, to_replace in replaces.items():
-        base_text = base_text.replace(replace, to_replace)
-
-    return base_text
-
-
 def format_to_digits_only(text: str) -> str:
     formated = ""
     for char in text:
