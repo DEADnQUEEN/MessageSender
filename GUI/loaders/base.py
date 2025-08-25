@@ -86,11 +86,18 @@ class LoaderBase(ABC):
     def save(self):
         raise NotImplementedError
 
+    @abstractmethod
+    def paste_variables(self, variables):
+        raise NotImplementedError
+
+    @abstractmethod
     def static_content(self, master: tk.Misc):
         raise NotImplementedError
 
+    @abstractmethod
     def get_name(self):
         raise NotImplementedError
+
 
 class RemoteLoader(LoaderBase, ABC):
     def cancel(self):

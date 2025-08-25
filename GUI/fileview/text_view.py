@@ -23,6 +23,8 @@ class TextView(base.View):
         self.view_zone.config(state=tk.DISABLED)
         self.view_zone.pack(expand=True, fill=tk.BOTH)
 
+        self.fill()
+
     def fill(self):
         self.view_zone.config(state=tk.NORMAL)
         self.view_zone.delete('1.0', tk.END)

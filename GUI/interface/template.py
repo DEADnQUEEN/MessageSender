@@ -1,5 +1,5 @@
 import tkinter as tk
-from  tkinter import messagebox
+from tkinter import messagebox
 
 from GUI.loaders import csv_loader, template
 
@@ -15,23 +15,41 @@ class UserView(tk.Frame):
     def setup_replaces(self):
         if not self.variables:
             self.bell()
-            messagebox.showerror(parent=self, title="Ошибка", message="Необходимо добавить CSV файл и указать переменные")
+            messagebox.showerror(
+                parent=self,
+                title="Ошибка",
+                message="Необходимо добавить CSV файл и указать переменные"
+            )
             return
 
-        self.__template_loader.grid.paste_variables(list(self.variables.keys()))
+        self.__template_loader.paste_variables(list(self.variables.keys()))
         self.__template_loader.load_file()
 
     def setup_sender(self):
         if not self.variables:
             self.bell()
-            messagebox.showerror(parent=self, title="Ошибка", message="Переменные не указаны.\nНеобходимо указать переменные")
+            messagebox.showerror(
+                parent=self,
+                title="Ошибка",
+                message="Переменные не указаны.\n"
+                        "Необходимо указать переменные"
+            )
             return
-        self.__sender_view_type(
+
+        if not self.__sender_view_type(
             waba_sender.WhatsAppApiSender,
             self.__csv_viewer,
             self.__template_loader,
+        ).setup_window():
+            self.bell()
+            messagebox.showerror(
+                parent=self,
+                title="Ошибка",
+                message="Переменные не указаны.\n"
+                        "Необходимо указать переменные"
+            )
+            return
 
-        ).setup_window()
 
     def __init__(
             self,

@@ -7,60 +7,45 @@ from messageSender.WhatsAppBusinessApiSender import config
 from utils import logger
 
 
-def get_endpoint(endpoint: str):
+def send_request(endpoint: str, method: str, **kwargs):
     if endpoint not in config.ENDPOINTS.keys():
         raise KeyError
 
-    return f"{config.BASE_URL}{config.ENDPOINTS[endpoint]}?token={config.TOKEN}"
+    response = requests.request(
+        method=method,
+        url=f"{config.BASE_URL}{config.ENDPOINTS[endpoint]}?token={config.TOKEN}",
+        headers={
+            'Content-Type': 'application/json',
+        },
+        **kwargs
+    )
+
+    response.raise_for_status()
+    return response.json()
+
 
 class WhatsAppApiSender(sender.Sender):
-    @staticmethod
-    def send_get_request(endpoint):
-        url = get_endpoint(endpoint)
-
-        response = requests.get(
-            url=url,
-            headers={
-                'Content-Type': 'application/json',
-            }
-        )
-        try:
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            logger.collect_log(str(e), "http_error")
-            raise e
-        return response.json()
-
-    @staticmethod
-    def send_text_template(to):
-        response =requests.post(
-            url=get_endpoint(endpoint=config.ENDPOINTS['template']),
-            data=json.dumps(
-                {
-
-                }
-            )
-        )
-        try:
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            logger.collect_log(str(e), "http_error")
-            raise e
-
     def send_text(self, to) -> bool:
-        response =requests.post(
-            url = get_endpoint(endpoint=config.ENDPOINTS['text']),
-            data=json.dumps(
-                {
-
-                }
-            )
-        )
+        data = {**self.default_data}
+        data['params'][0]['parameters'] = [
+            {
+                "type": "text",
+                'text': value
+            }
+            for value in self.values
+        ]
+        data['phone'] = f"{to}"
         try:
-            response.raise_for_status()
+            send_request(
+                endpoint='text',
+                method="post",
+                data=json.dumps(
+                    data
+                )
+            )
             return True
-        except requests.exceptions.HTTPError as e:
-            logger.collect_log(str(e), "http_error")
+        except Exception as e:
+            logger.collect_log(str(e), "wa_api_send")
             return False
 
     def send_image(self, to, image_path) -> bool:

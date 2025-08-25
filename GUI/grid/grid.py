@@ -17,7 +17,7 @@ class GridFrame(tk.Frame):
             widget = column_widget[0](self.__content_frame, **column_widget[1])
             widget.grid(row=self.rows, column=index, padx=5, pady=5)
 
-    def save(self, commit: bool = True):
+    def save(self):
         self.__content_frame.update()
 
         save = {}
@@ -75,7 +75,7 @@ class GridFrame(tk.Frame):
 
             if result:
                 self.save()
-            self.rows= 0
+            self.rows = 0
 
         super().destroy()
         self.master.destroy()

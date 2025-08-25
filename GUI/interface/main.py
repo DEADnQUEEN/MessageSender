@@ -18,7 +18,7 @@ class UserView(tk.Frame):
             messagebox.showerror(parent=self, title="Ошибка", message="Необходимо добавить CSV файл и указать переменные")
             return
 
-        self.__text_viewer.grid.paste_variables(list(self.variables.keys()))
+        self.__text_viewer.paste_variables(list(self.variables.keys()))
         self.__text_viewer.load_file()
 
     def setup_sender(self):

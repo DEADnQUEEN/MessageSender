@@ -1,11 +1,12 @@
 from tkinter import filedialog
 from typing import Optional
+from abc import ABC
 
 from GUI.loaders import base
 from GUI.fileview import text_view
 
 
-class FileLoad(base.FileLoader):
+class FileLoad(base.FileLoader, ABC):
     def show_in_file_zone(self):
         if self.filepath:
             with open(self.filepath, "r", encoding='utf-8') as f:
@@ -47,3 +48,6 @@ class FileLoad(base.FileLoader):
     @property
     def columns(self):
         return self.grid.data
+
+    def paste_variables(self, variables):
+        self.grid.paste_variables(variables)

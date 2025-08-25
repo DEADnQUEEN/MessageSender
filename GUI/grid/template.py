@@ -6,10 +6,10 @@ import tkinter as tk
 
 
 class TemplateGrid(grid.GridFrame):
-    def save(self, commit: bool = True):
+    def save(self):
         save = {
             "value": self.__variable_combobox.value,
-            "templates": super().save(False)
+            "templates": super().save()
         }
 
         self.drop(save)

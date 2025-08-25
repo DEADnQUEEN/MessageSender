@@ -74,3 +74,5 @@ class CSVLoader(fileview.FileLoad):
 
         return column_data
 
+    def get_name(self):
+        return "CSV"

@@ -3,7 +3,7 @@ from tkinter import messagebox
 from typing import Optional
 
 from GUI import constants
-from GUI.loaders import csv_loader, text_loader, base
+from GUI.loaders import csv_loader
 from GUI.content import content
 
 from utils import logger
@@ -11,7 +11,10 @@ from messageSender import sender
 
 
 class SenderUI:
-    def setup_window(self):
+    def setup_window(self) -> bool:
+        if self.__loaded_content.get_content() is None or self.__loaded_content.default_data() is None:
+            return False
+
         window = tk.Toplevel()
 
         for index, loader in enumerate((self.__loaded_content, self.__data)):
@@ -21,7 +24,7 @@ class SenderUI:
             frame = tk.Frame(window, borderwidth=1, relief=tk.RIDGE)
             loader.setup_file_view(frame)
             loader.show_in_file_zone()
-            frame.grid(row=1, column=0, padx=5, pady=5, rowspan=2, sticky=tk.NSEW)
+            frame.grid(row=1, column=index, padx=5, pady=5, sticky=tk.NSEW)
 
         work_container = tk.Frame(window, borderwidth=1, relief=tk.RIDGE)
 
@@ -30,27 +33,27 @@ class SenderUI:
             values=list(self.__data.columns.keys()),
             state='readonly',
         )
-        self.__to_combobox.grid(row=0, column=0, padx=5, pady=5, sticky=tk.NSEW)
+        self.__to_combobox.grid(row=0, column=0, padx=5, pady=5)
 
         select_button = tk.Button(
             work_container,
             text="Выбрать переменную с телефонами",
             command=lambda : messagebox.showinfo("Телефон", "Переменная с телефонами выбрана", parent=window),
         )
-        select_button.grid(row=0, column=1, padx=5, pady=5, sticky=tk.NSEW)
+        select_button.grid(row=0, column=1, padx=5, pady=5)
 
         button = tk.Button(
             work_container,
             text="Отправлять",
             command=self.save_wrap
         )
-        button.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
+        button.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
 
         self.state_label = tk.Label(
             work_container,
             text=""
         )
-        self.state_label.grid(row=2, column=0, padx=5, pady=5, columnspan=2, sticky=tk.NSEW)
+        self.state_label.grid(row=2, column=0, padx=5, pady=5, columnspan=2)
 
         work_container.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky=tk.NSEW)
 
@@ -63,41 +66,42 @@ class SenderUI:
             for row in range(columns):
                 grid.grid_rowconfigure(row, weight=1)
 
+        return True
+
     def save_wrap(self):
         try:
             self.send_message()
         except Exception as e:
             self.state_label.config(text="Произошла ошибка")
             logger.collect_log(str(e), "ui_exception")
+            raise e
 
     def send_message(self):
         if self.__bot_instance is None:
             raise ValueError
 
-        for k in self.__loaded_content.get_variables.keys():
-            if k not in self.__data.columns:
+        for content_item in self.__loaded_content.get_content():
+            if content_item not in self.__data.columns:
                 messagebox.showerror(
                     parent=self.state_label,
                     title='Ошибка',
-                    message='Переменная не существует.\nВозможно вы их обновили, но забыли связать текстовый шаблон'
+                    message='Переменная не существует.\n'
+                            'Возможно вы их обновили, но забыли переделать текстовый шаблон'
                 )
                 raise KeyError
 
-        text = self.__loaded_content.get_content
-
         with self.__bot_instance() as bot:
-            bot.set_template(text)
+            bot.default_data  = self.__loaded_content.default_data()
 
             for number, csv_row in enumerate(
                 self.__data.get_from_csv()
             ):
                 self.state_label.config(text=f"Отправляется сообщение {number + 1}")
-                bot.set_variables(
-                    {
-                        value['from']: csv_row[key]
-                        for key, value in self.__loaded_content.get_variables.keys()
-                    }
-                )
+
+                bot.values = [
+                    csv_row[variable]
+                    for variable in self.__loaded_content.get_content()
+                ]
 
                 phone_number = csv_row[self.__to_combobox.value]
 

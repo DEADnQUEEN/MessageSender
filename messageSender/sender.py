@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 class BaseSender(ABC):
     def __init__(self):
         super().__init__()
-        self.template: str = ""
-        self.variables: dict = {}
+        self.default_data = None
+        self.values = None
 
     @abstractmethod
     def __enter__(self):
@@ -14,13 +14,6 @@ class BaseSender(ABC):
     @abstractmethod
     def __exit__(self, exc_type, exc_val, exc_tb):
         raise NotImplementedError
-
-    def set_template(self, template: str):
-        self.template = template
-
-    def set_variables(self, variables: dict):
-        self.variables = variables
-
 
 class Sender(BaseSender):
     @abstractmethod

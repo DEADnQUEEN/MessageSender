@@ -7,7 +7,7 @@ class PredefinedCmb(ttk.Combobox):
         return self.__value.get()
 
     @property
-    def variable(self):
+    def variable(self) -> StringVar:
         return self.__value
 
     def __init__(self, master, *args, **kwargs):
