@@ -83,9 +83,9 @@ class WASender(Sender, AsyncSender):
         )
 
     def __set_text(self):
-        text = self.template
+        text = self.default_data
 
-        for replace, to in self.variables.items():
+        for replace, to in self.values.items():
             text = text.replace(replace, to)
 
         return text

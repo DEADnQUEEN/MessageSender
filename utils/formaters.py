@@ -1,12 +1,5 @@
 from typing import Callable
-
-city_to_actions = {
-    "Ставрополь": "Сборка мебели",
-    "Сочи": "Грузоперевозки\nСборка мебели",
-    "Ростов": "Сборка мебели",
-    "Новороссийск": "Сборка мебели\nУстановка дверей",
-    "Краснодар": "Грузоперевозки\nАренда спецтехники\nСборка мебели\nУстановка дверей",
-}
+from utils import config
 
 
 def format_to_digits_only(text: str) -> str:
@@ -27,10 +20,10 @@ def format_to_uppercase(text: str) -> str:
 
 
 def format_to_city_actions(text: str) -> str:
-    if text not in city_to_actions:
+    if text not in config.ACTIONS:
         raise ValueError(text)
 
-    return city_to_actions[text]
+    return config.ACTIONS[text]
 
 
 FORMAT_FUNCTIONS: dict[str, Callable[[str], str]] = {

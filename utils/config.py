@@ -23,6 +23,8 @@ def get_file_path(filename: str) -> str:
 with open(get_file_path('files.json'), 'r') as json_file:
     FILES = json.load(json_file)
 
+with open(get_file_path('actions.json'), 'r') as json_file:
+    ACTIONS = json.load(json_file)
 
 for directory in [LOGS, TEMPORARY]:
     if not os.path.exists(FILES[directory]):
