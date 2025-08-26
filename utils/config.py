@@ -2,26 +2,34 @@ import json
 import os
 
 
-CSV_DATA_FILE = os.path.join(os.getcwd(), 'config', 'table.csv')
-with open(os.path.join(os.getcwd(), 'config', 'image_config.json'), 'r', encoding="utf-8") as file:
-    CONFIG = json.load(file)
+TIMEDIFF = 0.1
+TIMEOUT = 50 * (1 / TIMEDIFF)
 
-with open(os.path.join(os.getcwd(), 'config', 'text.txt'), 'r', encoding='utf-8') as f:
-    BASE_TEXT = ""
-    for line in f.readlines():
-        BASE_TEXT += line
-
-with open(os.path.join(os.getcwd(), 'config', 'replaces.json'), 'r', encoding="utf-8") as file:
-    TEXT_REPLACES = json.load(file)
+LOGS = "log"
+TEMPORARY = "tmp"
+CONFIG_DIR = "configs"
 
 
-LOG_PATH = os.path.join(os.getcwd(), 'log')
-if not os.path.exists(LOG_PATH):
-    os.mkdir(LOG_PATH)
+def get_file_path(filename: str) -> str:
+    """
+    Note! Files need to be stored relative to the current working directory.
+    :param filename: name of the file
+    :return: full file path
+    """
+
+    return os.path.join(os.getcwd(), 'configs', filename)
 
 
-TMP_PATH = os.path.join(os.getcwd(), CONFIG['tmp_folder'])
-if not os.path.exists(TMP_PATH):
-    os.mkdir(TMP_PATH)
+with open(get_file_path('files.json'), 'r') as json_file:
+    FILES = json.load(json_file)
 
-COLUMN_PATH = os.path.join(os.getcwd(), "config", "csv_load.json")
+with open(get_file_path('actions.json'), 'r') as json_file:
+    ACTIONS = json.load(json_file)
+
+for directory in [LOGS, TEMPORARY]:
+    if not os.path.exists(FILES[directory]):
+        os.mkdir(FILES[directory])
+
+
+LOG_PATH = os.path.join(os.getcwd(), LOGS)
+TMP_PATH = os.path.join(os.getcwd(), TEMPORARY)
